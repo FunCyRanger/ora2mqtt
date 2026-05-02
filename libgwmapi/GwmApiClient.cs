@@ -34,6 +34,9 @@ public partial class GwmApiClient
         _appClient.DefaultRequestHeaders.Add("rs", "2");
         _appClient.DefaultRequestHeaders.Add("terminal", "GW_APP_ORA");
         _appClient.DefaultRequestHeaders.Add("brand", "3");
+        _appClient.DefaultRequestHeaders.Add("language", "en");
+        _appClient.DefaultRequestHeaders.Add("systemType", "1");
+        _appClient.DefaultRequestHeaders.Add("cver", "");
         _appClient.BaseAddress = new Uri("https://eu-app-gateway.gwmcloud.com/app-api/api/v1.0/");
     }
 
