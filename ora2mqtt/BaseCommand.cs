@@ -30,9 +30,12 @@ public abstract class BaseCommand
         var httpHandler = new HttpClientHandler();
         httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
 
-        // Add client certificate with private key (must NOT be disposed - kept for TLS lifetime)
+        // Add client certificate with private key via PKCS12 re-import for Linux compatibility
         var clientCert = certHandler.CertificateWithPrivateKey;
-        httpHandler.ClientCertificates.Add(clientCert);
+        var p12Password = "ora2mqtt";
+        var p12Data = clientCert.Export(X509ContentType.Pkcs12, p12Password);
+        var reimportedCert = new X509Certificate2(p12Data, p12Password, X509KeyStorageFlags.Exportable);
+        httpHandler.ClientCertificates.Add(reimportedCert);
 
         // Only add intermediate certificates to system store - NOT to ClientCertificates
         // (they're CA certs without private keys, not client certs)
