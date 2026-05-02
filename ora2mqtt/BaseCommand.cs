@@ -30,11 +30,9 @@ public abstract class BaseCommand
         var httpHandler = new HttpClientHandler();
         httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
 
-        // Add client certificate with private key
-        using (var clientCert = certHandler.CertificateWithPrivateKey)
-        {
-            httpHandler.ClientCertificates.Add(clientCert);
-        }
+        // Add client certificate with private key (must NOT be disposed - kept for TLS lifetime)
+        var clientCert = certHandler.CertificateWithPrivateKey;
+        httpHandler.ClientCertificates.Add(clientCert);
 
         // Add intermediate certificates individually
         foreach (var cert in certHandler.Chain)
