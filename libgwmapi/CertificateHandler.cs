@@ -17,7 +17,13 @@ namespace libgwmapi
                 var cert = Certificate;
                 var rsaParameters = RSAParameters;
                 var rsa = RSA.Create(rsaParameters);
-                var withKey = cert.CopyWithPrivateKey(rsa);
+
+                // Try PKCS8 export/import for better Linux compatibility
+                var pkcs8Data = rsa.ExportPkcs8PrivateKey();
+                var rsaFromPkcs8 = RSA.Create();
+                rsaFromPkcs8.ImportFromPem(Encoding.ASCII.GetString(pkcs8Data));
+
+                var withKey = cert.CopyWithPrivateKey(rsaFromPkcs8);
                 return withKey;
             }
         }
