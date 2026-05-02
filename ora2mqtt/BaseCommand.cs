@@ -18,12 +18,10 @@ public abstract class BaseCommand
     public string ConfigFile { get; set; }
 
     protected ILoggerFactory LoggerFactory { get; private set; }
-    private ILogger _logger;
 
     protected void Setup()
     {
         LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(x => x.SetMinimumLevel(Debug ? LogLevel.Trace : LogLevel.Error).AddConsole());
-        _logger = LoggerFactory.CreateLogger<BaseCommand>();
     }
 
     protected GwmApiClient ConfigureApiClient(Ora2MqttOptions options)
@@ -32,23 +30,11 @@ public abstract class BaseCommand
         var httpHandler = new HttpClientHandler();
         httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
 
-        // Debug: Log certificate properties
-        var rawCert = certHandler.Certificate;
-        _logger.LogDebug("Raw certificate: Subject={Subject}, HasPrivateKey={HasPrivateKey}, NotBefore={NotBefore}, NotAfter={NotAfter}",
-            rawCert.Subject, rawCert.HasPrivateKey, rawCert.NotBefore, rawCert.NotAfter);
-
-        var clientCertWithKey = certHandler.CertificateWithPrivateKey;
-        var keySize = clientCertWithKey.Key != null ? clientCertWithKey.Key.KeySize : 0;
-        _logger.LogDebug("Cert with key: HasPrivateKey={HasPrivateKey}, KeySize={KeySize}",
-            clientCertWithKey.HasPrivateKey, keySize);
-
         // Add client certificate with private key via PKCS12 re-import for Linux compatibility
+        var clientCertWithKey = certHandler.CertificateWithPrivateKey;
         var p12Password = "ora2mqtt";
         var p12Data = clientCertWithKey.Export(X509ContentType.Pkcs12, p12Password);
         var reimportedCert = new X509Certificate2(p12Data, p12Password, X509KeyStorageFlags.Exportable);
-        var reimportedKeySize = reimportedCert.Key != null ? reimportedCert.Key.KeySize : 0;
-        _logger.LogDebug("Reimported cert: HasPrivateKey={HasPrivateKey}, KeySize={KeySize}",
-            reimportedCert.HasPrivateKey, reimportedKeySize);
         httpHandler.ClientCertificates.Add(reimportedCert);
 
         // Only add intermediate certificates to system store - NOT to ClientCertificates
