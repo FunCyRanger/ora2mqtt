@@ -35,14 +35,22 @@ public abstract class BaseCommand
             httpHandler.ClientCertificates.Add(pkcs12);
         }
 
-        //TODO check how this behaves on linux and mac
+        // Add intermediate certificates to client certificates
+        var certs = certHandler.Chain;
+        foreach (var cert in certs)
+        {
+            if (cert.Issuer != cert.Subject)
+            {
+                httpHandler.ClientCertificates.Add(cert);
+            }
+        }
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             //add intermediates to local cert store, so they get sent with the request
             //https://github.com/dotnet/runtime/issues/55368#issuecomment-876775809
             var store = new X509Store(StoreName.CertificateAuthority, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadWrite);
-            var certs = certHandler.Chain;
             foreach (var cert in certs)
             {
                 if (cert.Issuer != cert.Subject)
