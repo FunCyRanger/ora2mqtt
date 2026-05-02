@@ -14,8 +14,7 @@ public abstract class BaseCommand
     [Option('d', "debug", Default = false, HelpText = "enable debug logging")]
     public bool Debug { get; set; }
 
-    [Option('c', "config", Default = "ora2mqtt.yml", HelpText = "path to yaml config file")]
-    public string ConfigFile { get; set; }
+    public string ConfigFile { get; set; } = "ora2mqtt.yml";
 
     protected ILoggerFactory LoggerFactory { get; private set; }
 

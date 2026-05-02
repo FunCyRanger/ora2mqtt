@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace ora2mqtt
 {
     [Verb("configure", HelpText = "run config file wizard")]
+    [Option('c', "config", Default = "ora2mqtt.yml", HelpText = "path to yaml config file")]
     public class ConfigureCommand:BaseCommand
     {
         private ILogger<ConfigureCommand> _logger;

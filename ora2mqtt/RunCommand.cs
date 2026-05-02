@@ -12,7 +12,8 @@ using ora2mqtt.Logging;
 namespace ora2mqtt;
 
 [Verb("run", true, HelpText = "default")]
-public class RunCommand:BaseCommand
+    [Option('c', "config", Default = "ora2mqtt.yml", HelpText = "path to yaml config file")]
+    public class RunCommand:BaseCommand
 {
     private ILogger _logger;
 
