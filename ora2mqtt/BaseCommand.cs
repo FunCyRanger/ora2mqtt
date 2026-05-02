@@ -38,15 +38,17 @@ public abstract class BaseCommand
             rawCert.Subject, rawCert.HasPrivateKey, rawCert.NotBefore, rawCert.NotAfter);
 
         var clientCertWithKey = certHandler.CertificateWithPrivateKey;
-        _logger.LogDebug("Cert with key: HasPrivateKey={HasPrivateKey}, KeyAlgorithm={KeyAlgorithm}, KeySize={KeySize}",
-            clientCertWithKey.HasPrivateKey, clientCertWithKey.KeyAlgorithm, clientCertWithKey.Key.Size);
+        var keySize = clientCertWithKey.Key != null ? clientCertWithKey.Key.KeySize : 0;
+        _logger.LogDebug("Cert with key: HasPrivateKey={HasPrivateKey}, KeySize={KeySize}",
+            clientCertWithKey.HasPrivateKey, keySize);
 
         // Add client certificate with private key via PKCS12 re-import for Linux compatibility
         var p12Password = "ora2mqtt";
         var p12Data = clientCertWithKey.Export(X509ContentType.Pkcs12, p12Password);
         var reimportedCert = new X509Certificate2(p12Data, p12Password, X509KeyStorageFlags.Exportable);
-        _logger.LogDebug("Reimported cert: HasPrivateKey={HasPrivateKey}, KeyAlgorithm={KeyAlgorithm}, KeySize={KeySize}",
-            reimportedCert.HasPrivateKey, reimportedCert.KeyAlgorithm, reimportedCert.Key.Size);
+        var reimportedKeySize = reimportedCert.Key != null ? reimportedCert.Key.KeySize : 0;
+        _logger.LogDebug("Reimported cert: HasPrivateKey={HasPrivateKey}, KeySize={KeySize}",
+            reimportedCert.HasPrivateKey, reimportedKeySize);
         httpHandler.ClientCertificates.Add(reimportedCert);
 
         // Only add intermediate certificates to system store - NOT to ClientCertificates
