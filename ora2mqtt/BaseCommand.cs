@@ -30,20 +30,19 @@ public abstract class BaseCommand
         var httpHandler = new HttpClientHandler();
         httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
 
-        // Build certificate collection with client cert and all chain certs
-        var clientCerts = new X509Certificate2Collection();
-        clientCerts.Add(certHandler.CertificateWithPrivateKey);
-        foreach (var cert in certHandler.Chain)
+        // Add client certificate with private key
+        using (var clientCert = certHandler.CertificateWithPrivateKey)
         {
-            clientCerts.Add(cert);
+            httpHandler.ClientCertificates.Add(clientCert);
         }
 
-        // Export as PKCS12 with full chain, then import back
-        var pkcs12Data = clientCerts.Export(X509ContentType.Pkcs12);
-        var clientCert = new X509Certificate2(pkcs12Data);
-        httpHandler.ClientCertificates.Add(clientCert);
+        // Add intermediate certificates individually
+        foreach (var cert in certHandler.Chain)
+        {
+            httpHandler.ClientCertificates.Add(cert);
+        }
 
-        // On Linux, also add intermediates to system store for TLS
+        // On Linux, also add intermediates to system store for root CA verification
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             try
