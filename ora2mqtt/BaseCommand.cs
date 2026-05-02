@@ -34,11 +34,8 @@ public abstract class BaseCommand
         var clientCert = certHandler.CertificateWithPrivateKey;
         httpHandler.ClientCertificates.Add(clientCert);
 
-        // Add intermediate certificates individually
-        foreach (var cert in certHandler.Chain)
-        {
-            httpHandler.ClientCertificates.Add(cert);
-        }
+        // Only add intermediate certificates to system store - NOT to ClientCertificates
+        // (they're CA certs without private keys, not client certs)
 
         // On Linux, also add intermediates to system store for root CA verification
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
