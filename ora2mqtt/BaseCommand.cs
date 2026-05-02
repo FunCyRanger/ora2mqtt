@@ -29,19 +29,35 @@ public abstract class BaseCommand
         var certHandler = new CertificateHandler();
         var httpHandler = new HttpClientHandler();
         httpHandler.ClientCertificateOptions = ClientCertificateOption.Manual;
-        using (var cert = certHandler.CertificateWithPrivateKey)
+
+        // Build certificate collection with client cert and all chain certs
+        var clientCerts = new X509Certificate2Collection();
+        clientCerts.Add(certHandler.CertificateWithPrivateKey);
+        foreach (var cert in certHandler.Chain)
         {
-            var pkcs12 = new X509Certificate2(cert.Export(X509ContentType.Pkcs12));
-            httpHandler.ClientCertificates.Add(pkcs12);
+            clientCerts.Add(cert);
         }
 
-        // Add intermediate certificates to client certificates
-        var certs = certHandler.Chain;
-        foreach (var cert in certs)
+        // Export as PKCS12 with full chain, then import back
+        var pkcs12Data = clientCerts.Export(X509ContentType.Pkcs12);
+        var clientCert = new X509Certificate2(pkcs12Data);
+        httpHandler.ClientCertificates.Add(clientCert);
+
+        // On Linux, also add intermediates to system store for TLS
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            if (cert.Issuer != cert.Subject)
+            try
             {
-                httpHandler.ClientCertificates.Add(cert);
+                var store = new X509Store(StoreName.CertificateAuthority, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadWrite);
+                foreach (var cert in certHandler.Chain)
+                {
+                    store.Add(cert);
+                }
+            }
+            catch
+            {
+                // Ignore if store cannot be opened
             }
         }
 
@@ -51,12 +67,9 @@ public abstract class BaseCommand
             //https://github.com/dotnet/runtime/issues/55368#issuecomment-876775809
             var store = new X509Store(StoreName.CertificateAuthority, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadWrite);
-            foreach (var cert in certs)
+            foreach (var cert in certHandler.Chain)
             {
-                if (cert.Issuer != cert.Subject)
-                {
-                    store.Add(cert);
-                }
+                store.Add(cert);
             }
         }
 
